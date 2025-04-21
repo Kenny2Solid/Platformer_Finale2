@@ -19,124 +19,203 @@ import objects.Spike;
 
 public class HelpMethods {
 
-    public static boolean IsTileSolid(int xTile, int yTile, int[][] lvlData) {
-        // TODO: create an int named value and assign lvlData[yTile][xTile] to it.
-        // TODO: check if value is greater than or equal to 48 or value < 0 or value != 11
-        // TODO: (cont). when the condition is true return true, else false
+    public static boolean CanMoveHere(float x, float y, float width, float height, int[][] lvlData) {
+        if (!IsSolid(x, y, lvlData))
+            if (!IsSolid(x + width, y + height, lvlData))
+                if (!IsSolid(x + width, y, lvlData))
+                    if (!IsSolid(x, y + height, lvlData))
+                        return true;
+        return false;
     }
 
     private static boolean IsSolid(float x, float y, int[][] lvlData) {
-        // TODO: create an int called maxWidth and set to lvlData[0].length * Game.TILES_SIZE
-        // TODO check if x is less than 0 or x is greater than or equal to maxWidth.
-        // TODO: (cont.) if the condition is true return true
-        // TODO: check if y is less than 0 or y is greater than or equal to Game.GAME_HEIGHT
-        // TODO: (cont.) if the condition is true return true
+        int maxWidth = lvlData[0].length * Constants.Game.TILES_SIZE;
+        if (x < 0 || x >= maxWidth)
+            return true;
+        if (y < 0 || y >= Constants.Game.GAME_HEIGHT)
+            return true;
+        float xIndex = x / Constants.Game.TILES_SIZE;
+        float yIndex = y / Constants.Game.TILES_SIZE;
 
-        // TODO: make a float called xIndex and set to x / Game.TILES_SIZE
-        // TODO: repeat for y
-
-        // TODO: create an int named xTile and set to (int) xIndex.  This casts the float to an int chopping off the decimal.
-        // TODO: repeat for y
-
-        // TODO: return IsTileSolid passing in xTile, yTile, and lvlData
+        return IsTileSolid((int) xIndex, (int) yIndex, lvlData);
     }
-
-    public static boolean CanMoveHere(float x, float y, float width, float height, int[][] lvlData) {
-        // TODO: This checks if the four corners of something is able to move.
-        // TODO: we will need 4 booleans first.  Initialize them all to false.
-        // TODO: make one called bottomLeftGood
-        // TODO: another called topRightGood
-        // TODO: another called bottomRightGood
-        // TODO: and finally one called topLeftGood
-        // TODO: assign to bottomLeftGood !IsSolid(x, y, lvlData)
-        // TODO: assign to topRightGood !IsSolid(x + width, y + height, lvlData)
-        // TODO: assign to bottomRightGood !IsSolid(x + width, y, lvlData)
-        // TODO: assign to topLeftGood !IsSolid(x, y + height, lvlData)
-
-        return bottomLeftGood && topRightGood && bottomRightGood && topLeftGood;
-    }
-
 
     public static boolean IsProjectileHittingLevel(Projectile p, int[][] lvlData) {
-        // TODO: create a float named hitboxCenterX and set to (p.getHitbox().x + p.getHitbox().width) / 2
-        // TODO: repeat for hitboxCenterY in the same fashion but use y and height instead
-        return IsSolid(
-                hitboxCenterX,
-                hitboxCenterY,
-                lvlData);
+        return IsSolid(p.getHitbox().x + p.getHitbox().width / 2, p.getHitbox().y + p.getHitbox().height / 2, lvlData);
+
     }
 
+    public static boolean IsTileSolid(int xTile, int yTile, int[][] lvlData) {
+        int value = lvlData[yTile][xTile];
+
+        if (value >= 48 || value < 0 || value != 11)
+            return true;
+        return false;
+    }
 
     public static float GetEntityXPosNextToWall(Rectangle2D.Float hitbox, float xSpeed) {
-        // TODO: create an int named currentTile and set to (int) (hitbox.x / Game.TILES_SIZE)
-        // TODO: check if xSpeed is positive.  (This is the Right)
-        // TODO: (cont.) if the condition is true do the following
-        // TODO: (cont.) create an int named tileXPos and set to currentTile * Game.TILES_SIZE
-        // TODO: (cont.) create an int named xOffset and set to (int)(Game.TILES_SIZE - hitbox.width
-        // TODO: (cont.) return tileXPos + xOffset - 1
-        // TODO: else return currentTile * GAME.TILES_SIZE  (This is the Left)
+        int currentTile = (int) (hitbox.x / Constants.Game.TILES_SIZE);
+        if (xSpeed > 0) {
+            // Right
+            int tileXPos = currentTile * Constants.Game.TILES_SIZE;
+            int xOffset = (int) (Constants.Game.TILES_SIZE - hitbox.width);
+            return tileXPos + xOffset - 1;
+        } else
+            // Left
+            return currentTile * Constants.Game.TILES_SIZE;
     }
 
     public static float GetEntityYPosUnderRoofOrAboveFloor(Rectangle2D.Float hitbox, float airSpeed) {
-        // TODO: create an int named currentTile and set to (int) (hitbox.y / Game.TILES_SIZE)
-        // TODO: check if airSpeed is positive.  (This is the Falling - touching floor)
-        // TODO: (cont.) if the condition is true do the following
-        // TODO: (cont.) create an int named tileYPos and set to currentTile * Game.TILES_SIZE
-        // TODO: (cont.) create an int named yOffset and set to (int)(Game.TILES_SIZE - hitbox.height
-        // TODO: (cont.) return tileXPos + yOffset - 1
-        // TODO: else return currentTile * GAME.TILES_SIZE  (This is Jumping)
+        int currentTile = (int) (hitbox.y / Constants.Game.TILES_SIZE);
+        if (airSpeed > 0) {
+            // Falling - touching floor
+            int tileYPos = currentTile * Constants.Game.TILES_SIZE;
+            int yOffset = (int) (Constants.Game.TILES_SIZE - hitbox.height);
+            return tileYPos + yOffset - 1;
+        } else
+            // Jumping
+            return currentTile * Constants.Game.TILES_SIZE;
+
     }
 
     public static boolean IsEntityOnFloor(Rectangle2D.Float hitbox, int[][] lvlData) {
-
+        if (!IsSolid(hitbox.x, hitbox.y + hitbox.height + 1, lvlData))
+            if (!IsSolid(hitbox.x + hitbox.width, hitbox.y + hitbox.height + 1, lvlData))
+                return false;
+        return true;
     }
 
     public static boolean IsFloor(Rectangle2D.Float hitbox, float xSpeed, int[][] lvlData) {
-
+        if (xSpeed > 0)
+            return IsSolid(hitbox.x + hitbox.width + xSpeed, hitbox.y + hitbox.height + 1, lvlData);
+        else
+            return IsSolid(hitbox.x + xSpeed, hitbox.y + hitbox.height + 1, lvlData);
     }
 
     public static boolean CanCannonSeePlayer(int[][] lvlData, Rectangle2D.Float firstHitbox, Rectangle2D.Float secondHitbox, int yTile) {
+        int firstXTile = (int) (firstHitbox.x / Constants.Game.TILES_SIZE);
+        int secondXTile = (int) (secondHitbox.x / Constants.Game.TILES_SIZE);
 
+        if (firstXTile > secondXTile)
+            return IsAllTilesClear(secondXTile, firstXTile, yTile, lvlData);
+        else
+            return IsAllTilesClear(firstXTile, secondXTile, yTile, lvlData);
     }
 
     public static boolean IsAllTilesClear(int xStart, int xEnd, int y, int[][] lvlData) {
-
+        for (int i = 0; i < xEnd - xStart; i++)
+            if (IsTileSolid(xStart + i, y, lvlData))
+                return false;
+        return true;
     }
 
     public static boolean IsAllTilesWalkable(int xStart, int xEnd, int y, int[][] lvlData) {
-
+        if (IsAllTilesClear(xStart, xEnd, y, lvlData))
+            for (int i = 0; i < xEnd - xStart; i++) {
+                if (!IsTileSolid(xStart + i, y + 1, lvlData))
+                    return false;
+            }
+        return true;
     }
 
     public static boolean IsSightClear(int[][] lvlData, Rectangle2D.Float firstHitbox, Rectangle2D.Float secondHitbox, int yTile) {
+        int firstXTile = (int) (firstHitbox.x / Constants.Game.TILES_SIZE);
+        int secondXTile = (int) (secondHitbox.x / Constants.Game.TILES_SIZE);
 
+        if (firstXTile > secondXTile)
+            return IsAllTilesWalkable(secondXTile, firstXTile, yTile, lvlData);
+        else
+            return IsAllTilesWalkable(firstXTile, secondXTile, yTile, lvlData);
     }
 
     public static int[][] GetLevelData(BufferedImage img) {
-
+        int[][] lvlData = new int[img.getHeight()][img.getWidth()];
+        for (int j = 0; j < img.getHeight(); j++)
+            for (int i = 0; i < img.getWidth(); i++) {
+                Color color = new Color(img.getRGB(i, j));
+                int value = color.getRed();
+                if (value >= 48)
+                    value = 0;
+                lvlData[j][i] = value;
+            }
+        return lvlData;
     }
 
     public static ArrayList<Crabby> GetCrabs(BufferedImage img) {
-
+        ArrayList<Crabby> list = new ArrayList<>();
+        for (int j = 0; j < img.getHeight(); j++)
+            for (int i = 0; i < img.getWidth(); i++) {
+                Color color = new Color(img.getRGB(i, j));
+                int value = color.getGreen();
+                if (value == CRABBY)
+                    list.add(new Crabby(i * Constants.Game.TILES_SIZE, j * Constants.Game.TILES_SIZE));
+            }
+        return list;
     }
 
     public static Point GetPlayerSpawn(BufferedImage img) {
-
+        for (int j = 0; j < img.getHeight(); j++)
+            for (int i = 0; i < img.getWidth(); i++) {
+                Color color = new Color(img.getRGB(i, j));
+                int value = color.getGreen();
+                if (value == 100)
+                    return new Point(i * Constants.Game.TILES_SIZE, j * Constants.Game.TILES_SIZE);
+            }
+        return new Point(1 * Constants.Game.TILES_SIZE, 1 * Constants.Game.TILES_SIZE);
     }
 
     public static ArrayList<Potion> GetPotions(BufferedImage img) {
+        ArrayList<Potion> list = new ArrayList<>();
+        for (int j = 0; j < img.getHeight(); j++)
+            for (int i = 0; i < img.getWidth(); i++) {
+                Color color = new Color(img.getRGB(i, j));
+                int value = color.getBlue();
+                if (value == RED_POTION || value == BLUE_POTION)
+                    list.add(new Potion(i * Constants.Game.TILES_SIZE, j * Constants.Game.TILES_SIZE, value));
+            }
 
+        return list;
     }
 
     public static ArrayList<GameContainer> GetContainers(BufferedImage img) {
+        ArrayList<GameContainer> list = new ArrayList<>();
+        for (int j = 0; j < img.getHeight(); j++)
+            for (int i = 0; i < img.getWidth(); i++) {
+                Color color = new Color(img.getRGB(i, j));
+                int value = color.getBlue();
+                if (value == BOX || value == BARREL)
+                    list.add(new GameContainer(i * Constants.Game.TILES_SIZE, j * Constants.Game.TILES_SIZE, value));
+            }
 
+        return list;
     }
 
     public static ArrayList<Spike> GetSpikes(BufferedImage img) {
+        ArrayList<Spike> list = new ArrayList<>();
 
+        for (int j = 0; j < img.getHeight(); j++)
+            for (int i = 0; i < img.getWidth(); i++) {
+                Color color = new Color(img.getRGB(i, j));
+                int value = color.getBlue();
+                if (value == SPIKE)
+                    list.add(new Spike(i * Constants.Game.TILES_SIZE, j * Constants.Game.TILES_SIZE, SPIKE));
+            }
+
+        return list;
     }
 
     public static ArrayList<Cannon> GetCannons(BufferedImage img) {
+        ArrayList<Cannon> list = new ArrayList<>();
 
+        for (int j = 0; j < img.getHeight(); j++)
+            for (int i = 0; i < img.getWidth(); i++) {
+                Color color = new Color(img.getRGB(i, j));
+                int value = color.getBlue();
+                if (value == CANNON_LEFT || value == CANNON_RIGHT)
+                    list.add(new Cannon(i * Constants.Game.TILES_SIZE, j * Constants.Game.TILES_SIZE, value));
+            }
+
+        return list;
     }
 
 }
